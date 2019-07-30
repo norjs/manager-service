@@ -56,7 +56,7 @@ You may combine this as a single root `./package.json`:
   "version": "1.0.0",
   "description": "My awesome full stack app",
   "scripts": {
-    "post-install": "nor-manager-service install",
+    "install": "nor-manager-service install",
     "start": "nor-manager-service start"
   },
   "dependencies": {
