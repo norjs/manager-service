@@ -1,4 +1,4 @@
-# manager-service
+# @norjs/manager-service
 
 This is a micro service which manages other services.
 
