@@ -1,7 +1,7 @@
 # @norjs/manager-service
 
 ***NOTE!*** This README is a draft. This software is not yet published nor finished; until then this is the complete
-specification for developer.
+specification for a developer.
 
 This is a micro service which manages other services.
 
@@ -42,14 +42,27 @@ Configuration file named `nor.json`:
 }
 ```
 
-Where `./backend` and `./frontend` are directories with standard `package.json` and correct NPM rules for installing, 
-starting and stoping the service.
+Where `./backend` and `./frontend` are directories with standard `package.json` files and correct NPM rules for 
+installing and starting the service.
 
 Please note, that if you use `backend` or `frontend`, that will be recognized as a local NPM package name.
 
-Then running `nor-manager-service install` will run the install command for each service in the development mode.
+#### Installing services
+
+If you're using NPM dependencies directly, you may not need to run the install step at all. Of course, you'll need to 
+use `npm install` then.
+
+Running `nor-manager-service install` will run the install command for each service in the development mode.
+
+`nor-manager-service install production` will do the same in a production mode.
  
-Also `nor-manager-service start` will start each service and open a combined console for each.
+#### Starting services
+
+`nor-manager-service start` will start each service in a development mode and open a combined console for each.
+
+`nor-manager-service start production` will do the same in a production mode.
+
+#### Using with the package.json
 
 You may combine this as a single root `./package.json`:
 
