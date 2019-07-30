@@ -1,0 +1,7 @@
+/.nyc_output/
+/**/*.log
+/**/npm-debug.log*
+/**/*.pid
+/node_modules/
+/data-store/*.json
+/examples/*.json.ignore

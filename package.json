@@ -1,0 +1,38 @@
+{
+  "name": "@norjs/manager-service",
+  "version": "1.0.10",
+  "description": "A micro service which manages other services",
+  "main": "./src/index.js",
+  "bin": {
+    "nor-manager-service": "./src/bin/manager-service.js"
+  },
+  "scripts": {
+    "start": "node ./src/bin/manager-service.js",
+    "test": "mocha test/**/*.spec.js",
+    "test-watch": "mocha --watch-extensions js --watch test/**/*.spec.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/norjs/manager-service.git"
+  },
+  "keywords": [
+    "manager",
+    "process",
+    "unix-socket"
+  ],
+  "author": "Jaakko Heusala <jheusala@iki.fi>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/norjs/manager-service/issues"
+  },
+  "homepage": "https://github.com/norjs/manager-service#readme",
+  "dependencies": {
+    "@norjs/socket": "^1.0.10",
+    "@norjs/utils": "^1.0.10",
+    "lodash": "^4.17.15"
+  },
+  "devDependencies": {
+    "mocha": "^6.1.4",
+    "sinon": "^7.3.2"
+  }
+}
