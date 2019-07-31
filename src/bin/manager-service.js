@@ -93,7 +93,7 @@ LogicUtils.tryCatch( () => {
              */
             const serviceConfig = config.services[key];
 
-            const serviceConfigPath = NOR_MANAGER_SERVICE_PATH ? PATH.resolve(NOR_MANAGER_SERVICE_PATH, serviceConfig.path) : serviceConfig.path;
+            const serviceConfigPath = PATH.resolve(NOR_MANAGER_SERVICE_PATH, serviceConfig.path);
 
             services[key] = {
                 name: key,
