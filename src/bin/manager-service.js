@@ -47,14 +47,14 @@ LogicUtils.tryCatch( () => {
      *
      * @type {string}
      */
-    const NOR_MANAGER_SERVICE_PATH = process.env.NOR_MANAGER_SERVICE_PATH || '.';
+    const NOR_MANAGER_CONFIG = process.env.NOR_MANAGER_CONFIG || './nor.json';
 
     // noinspection JSUnresolvedVariable
     /**
      *
      * @type {string}
      */
-    const NOR_MANAGER_CONFIG = process.env.NOR_MANAGER_CONFIG || './nor.json';
+    const NOR_MANAGER_SERVICE_PATH = process.env.NOR_MANAGER_SERVICE_PATH || PATH.dirname(NOR_MANAGER_CONFIG);
 
     // noinspection JSUnresolvedVariable
     /**
