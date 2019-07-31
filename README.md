@@ -45,7 +45,8 @@ Configuration file named `nor.json`:
 Where `./backend` and `./frontend` are directories with standard `package.json` files and correct NPM rules for 
 installing and starting the service.
 
-Please note, that if you use `backend` or `frontend`, that will be recognized as a local NPM package name.
+Please note, that if you use `backend` or `frontend`, that will be recognized as a NPM package name, and 
+`./node_modules/NAME` will be used instead as a path.
 
 #### Installing services
 
