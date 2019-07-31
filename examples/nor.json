@@ -1,3 +1,21 @@
 {
-
+  "name": "my-awesome-app",
+  "services": {
+    "backend": {
+      "path": "./backend",
+      "production": true,
+      "development": true,
+      "env": {
+        "NODE_LISTEN": "./backend.sock"
+      }
+    },
+    "frontend": {
+      "path": "./frontend",
+      "production": true,
+      "development": true,
+      "env": {
+        "NODE_LISTEN": "localhost:4000"
+      }
+    }
+  }
 }
