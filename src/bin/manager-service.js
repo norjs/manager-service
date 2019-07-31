@@ -112,7 +112,7 @@ LogicUtils.tryCatch( () => {
     });
 
     // Create server
-    const server = HttpUtils.createServer(HTTP,(req, res) => {
+    const server = HttpUtils.createJsonServer(HTTP,(req, res) => {
         return service.onRequest(req, res);
     } );
 

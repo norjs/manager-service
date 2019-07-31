@@ -24,6 +24,12 @@ const LogUtils = require('@norjs/utils/Log');
  */
 const PromiseUtils = require('@norjs/utils/Promise');
 
+/**
+ *
+ * @type {typeof HttpUtils}
+ */
+const HttpUtils = require('@norjs/utils/Http');
+
 // Types and interfaces
 require('@norjs/types/NorConfigurationObject.js');
 
@@ -82,17 +88,13 @@ class ManagerService {
 
         console.log(LogUtils.getLine(`Request "${req.method} ${req.url}" started`));
 
-        /**
-         * @type {string}
-         */
-        const url = _.replace(`${req.url}/`, /\/+$/, "/");
-
-        /**
-         * @type {string}
-         */
-        const method = req.method;
-
-        console.log(`WOOT: url = "${url}", method = "${method}"`);
+        return HttpUtils.routeRequest(HttpUtils.getRequestAction(req), {
+            GET: {
+                "/": () => ({path: "index"}),
+                "/install/": () => ({path: "install"}),
+                "/start/": () => ({path: "start"})
+            }
+        });
 
     }
 
