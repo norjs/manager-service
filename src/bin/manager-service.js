@@ -15,15 +15,21 @@ const LogicUtils = require('@norjs/utils/Logic');
 
 /**
  *
+ * @type {typeof HttpUtils}
+ */
+const HttpUtils = require('@norjs/utils/Http');
+
+/**
+ *
  * @type {typeof ManagerService}
  */
 const ManagerService = require('../service/ManagerService.js');
 
 /**
  *
- * @type {typeof HttpUtils}
+ * @type {typeof HttpManagerAdapter}
  */
-const HttpUtils = require('@norjs/utils/Http');
+const HttpManagerAdapter = require('../service/HttpManagerAdapter.js');
 
 /**
  *
@@ -104,6 +110,7 @@ LogicUtils.tryCatch( () => {
     }
 
     /**
+     * This is the buiness logic for manager service
      *
      * @type {ManagerService}
      */
@@ -111,10 +118,20 @@ LogicUtils.tryCatch( () => {
         services
     });
 
+    /**
+     * This class converts HTTP requests to actions in ManagerService
+     *
+     * @type {HttpManagerAdapter}
+     */
+    const httpManagerAdapter = new HttpManagerAdapter({
+        manager: service
+    });
+
     // Create server
-    const server = HttpUtils.createJsonServer(HTTP,(req, res) => {
-        return service.onRequest(req, res);
-    } );
+    const server = HttpUtils.createJsonServer(
+        HTTP,
+        (req, res) => httpManagerAdapter.onRequest(req, res)
+    );
 
     // Start listening
     HttpUtils.listen(server, NODE_LISTEN, () => {
