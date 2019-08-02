@@ -31,6 +31,12 @@ require('@norjs/types/NorManagerStartActionObject.js');
 
 /**
  *
+ * @type {ServiceInstance}
+ */
+const ServiceInstance = require('./ServiceInstance.js');
+
+/**
+ *
  */
 class ManagerService {
 
@@ -48,6 +54,13 @@ class ManagerService {
          * @private
          */
         this._services = services;
+
+        /**
+         *
+         * @member {Object.<string, ServiceInstance>}
+         * @private
+         */
+        this._instances = {};
 
         /**
          *
@@ -92,8 +105,6 @@ class ManagerService {
 
         TypeUtils.assert(payload, "NorManagerInstallActionObject");
 
-        const results = [];
-
         const steps = _.map(_.keys(this._services), key => {
             return () => {
 
@@ -118,15 +129,13 @@ class ManagerService {
                     } else {
                         return {name: key, status: -1, error: `${err}`};
                     }
-                }).then(result => {
-                    results.push(result);
                 });
 
             };
 
         });
 
-        return _.reduce(steps, (a, b) => a.then(b), Promise.resolve()).then(() => results);
+        return ManagerService._collectResults(steps);
 
     }
 
@@ -136,9 +145,110 @@ class ManagerService {
      * @private
      */
     onStartAction (payload) {
-        TypeUtils.assert(payload, "NorManagerStartActionObject");
-        console.log(`WOOT: start action with `, payload, this._services);
 
+        TypeUtils.assert(payload, "NorManagerStartActionObject");
+
+        const steps = _.map(_.keys(this._services), key => {
+            return () => {
+
+                const service = this._services[key];
+
+                if (!service.path) {
+                    return Promise.resolve({name: key, status: -3, error: `No service.path defined!`});
+                }
+
+                if (_.has(this._instances, key)) {
+                    return Promise.resolve({name: key, status: -3, error: `Service was already started`});
+                }
+
+                const options = {
+                    cwd: service.path,
+                    env: service.env ? _.cloneDeep(service.env) : {},
+                    stdout: (data) => {
+                        console.log(LogUtils.getLine(`[${key}] '${data}'`));
+                    },
+                    stderr: (data) => {
+                        console.error(LogUtils.getLine(`[${key}] '${data}'`));
+                    }
+                };
+
+                const promise = ChildProcessUtils.execute('npm', ['start'], options).then( result => {
+                    console.log(LogUtils.getLine(`Service "${key}" stopped with a status ${result.status}`));
+                }, err => {
+                    if (err.status) {
+                        if (err.stderr) {
+                            console.error(LogUtils.getLine(`Service "${key}" stopped with a status ${err.status}: "${err.stderr}"`));
+                        } else {
+                            console.error(LogUtils.getLine(`Service "${key}" stopped with a status ${err.status}`));
+                        }
+                    } else {
+                        console.error(LogUtils.getLine(`Service "${key}" stopped with an error: `, err));
+                    }
+                }).catch(err => {
+                    console.error(LogUtils.getLine(`Service "${key}" had an exception: `, err));
+                }).finally(() => {
+
+                    this._removeInstance(key);
+
+                });
+
+                // noinspection UnnecessaryLocalVariableJS
+                const instance = new ServiceInstance({
+                    name: key,
+                    childProcess: promise.CHILD
+                });
+
+                this._instances[key] = instance;
+
+                // FIXME: We should wait for a timeout until resolving, eg. for 15 seconds, to see if the service start fails.
+
+                return Promise.resolve({name: key, state: "running" } );
+            };
+
+        });
+
+        return ManagerService._collectResults(steps);
+
+    }
+
+    /**
+     * Removes an instance which no longer is running
+     *
+     * @param name {string}
+     * @private
+     */
+    _removeInstance (name) {
+
+        LogicUtils.tryCatch( () => this._instances[name].onDestroy() , err => this._handleError(err) );
+
+        delete this._instances[name];
+
+    }
+
+    // noinspection JSMethodCanBeStatic
+    _handleError (err) {
+        console.error(LogUtils.getLine(`Exception: "${err}": `, err));
+    }
+
+    /**
+     *
+     * @param steps {Array.<Function>}
+     * @returns {Promise.<*>}
+     * @private
+     */
+    static _collectResults (steps) {
+
+        let results = [];
+
+        return _.reduce(
+            steps,
+            (a, b) => a.then(b).then(result => {
+                results.push(result);
+            }),
+            Promise.resolve()
+        ).then(
+            () => results
+        );
 
     }
 
