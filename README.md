@@ -104,3 +104,18 @@ Eg, `my-awesome-app/backend` and `my-awesome-app/frontend` are two services from
 If one uses the `my-awesome-app` as part of another managed service as a sub service, the name may be combined as
 `some-name/my-awesome-app/backend`.
 
+#### Command line environment options
+
+The `nor-manager-service` accepts following environment options:
+
+ * `NOR_MANAGER_CONFIG` -- The path to configuration, defaults to `./norjs.json` 
+ * `NOR_MANAGER_SERVICE_PATH` -- The path to configuration root directory, defaults to directory of `NOR_MANAGER_CONFIG`
+ * `NODE_LISTEN` -- Where to start the service. Defaults to `./socket.sock`. Can also be a `hostname:port` or `port` for TCP connections.
+ 
+### Testing
+
+#### Testing with curl
+
+To test a HTTP service at `localhost:3000`:
+
+`curl -X POST localhost:3000/install -H "Content-Type: application/json" -d '{"payload": {"stdout": true}}'`

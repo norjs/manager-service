@@ -18,6 +18,12 @@ const LogicUtils = require('@norjs/utils/Logic');
  */
 const LogUtils = require('@norjs/utils/Log');
 
+/**
+ *
+ * @type {typeof ChildProcessUtils}
+ */
+const ChildProcessUtils = require('@norjs/utils/ChildProcess');
+
 // Types and interfaces
 require('@norjs/types/NorConfigurationObject.js');
 require('@norjs/types/NorManagerInstallActionObject.js');
@@ -60,6 +66,7 @@ class ManagerService {
         return '@norjs/manager-service';
     }
 
+    // noinspection JSMethodCanBeStatic
     /**
      *
      * @param port {string} A string which presents where the service is running
@@ -68,6 +75,7 @@ class ManagerService {
         console.log(LogUtils.getLine(`${ManagerService.getAppName()} running at ${port}` ));
     }
 
+    // noinspection JSMethodCanBeStatic
     /**
      * Close the server
      */
@@ -81,9 +89,37 @@ class ManagerService {
      * @private
      */
     onInstallAction (payload) {
-        TypeUtils.assert(payload, "NorManagerInstallActionObject");
-        console.log(`WOOT: install action with `, payload, this._services);
 
+        TypeUtils.assert(payload, "NorManagerInstallActionObject");
+
+        const promises = _.map(_.keys(this._services), key => {
+
+            const service = this._services[key];
+
+            if (!service.path) {
+                return Promise.resolve({name: key, status: -1, error: `No service.path defined!`});
+            }
+
+            const stdoutEnabled = !!payload.stdout;
+
+            const options = {
+                cwd: service.path,
+                stdout: stdoutEnabled
+            };
+
+            return ChildProcessUtils.execute('npm', ['install'], options).then( result => {
+                return {name: key, status: result.status, output: result.stdout, warnings: result.stderr};
+            }).catch( err => {
+                if (err.status) {
+                    return {name: key, status: err.status, error: err.stderr, debug: err.stdout};
+                } else {
+                    return {name: key, status: -1, error: `${err}`};
+                }
+            });
+
+        });
+
+        return Promise.all(promises);
 
     }
 

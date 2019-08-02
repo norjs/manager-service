@@ -146,7 +146,6 @@ class HttpManagerAdapter {
      */
     _onInstallAction (payload) {
         TypeUtils.assert(payload, "NorManagerInstallActionObject");
-        console.log(`WOOT: install action with `, payload);
         return this._manager.onInstallAction(payload);
     }
 
@@ -157,7 +156,6 @@ class HttpManagerAdapter {
      */
     _onStartAction (payload) {
         TypeUtils.assert(payload, "NorManagerStartActionObject");
-        console.log(`WOOT: start action with `, payload);
         return this._manager.onStartAction(payload);
     }
 
