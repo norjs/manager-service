@@ -44,9 +44,11 @@ class ManagerService {
     /**
      *
      * @param services {Object.<string,NorConfigurationServiceObject>}
+     * @param mode {string} The running mode, eg. "production" or "development".
      */
     constructor ({
-        services
+        services,
+        mode
     }) {
 
         /**
@@ -62,6 +64,17 @@ class ManagerService {
          * @private
          */
         this._instances = {};
+
+        /**
+         * The running mode.
+         *
+         *  - `"production"`
+         *  - `"development"`
+         *
+         * @member {string}
+         * @private
+         */
+        this._mode = mode;
 
         /**
          *
@@ -105,7 +118,12 @@ class ManagerService {
 
         TypeUtils.assert(payload, "NorManagerInstallActionObject");
 
-        const steps = _.map(_.keys(this._services), key => {
+        const serviceKeys = this._filterServiceKeys(_.keys(this._services), {
+            production: payload.production,
+            development: payload.development
+        });
+
+        const steps = _.map(serviceKeys, key => {
             return () => {
 
                 const service = this._services[key];
@@ -147,7 +165,12 @@ class ManagerService {
 
         TypeUtils.assert(payload, "NorManagerStartActionObject");
 
-        const steps = _.map(_.keys(this._services), key => {
+        const serviceKeys = this._filterServiceKeys(_.keys(this._services), {
+            production: payload.production,
+            development: payload.development
+        });
+
+        const steps = _.map(serviceKeys, key => {
             return () => {
 
                 const service = this._services[key];
@@ -218,14 +241,22 @@ class ManagerService {
 
         TypeUtils.assert(payload, "NorManagerStatusActionObject");
 
-        return _.map(_.keys(this._services), key => {
+        const serviceKeys = this._filterServiceKeys(_.keys(this._services), {
+            production: payload.production,
+            development: payload.development
+        });
 
-            // const service = this._services[key];
+        return _.map(serviceKeys, key => {
+
+            const service = this._services[key];
             const instance = _.has(this._instances, key) ? this._instances[key] : undefined;
 
             return {
                 name: key,
-                state: instance ? 'started' : 'stopped'
+                state: instance ? 'started' : 'stopped',
+                production: service.production,
+                development: service.development,
+                env: _.cloneDeep(service.env)
             };
 
         });
@@ -244,6 +275,62 @@ class ManagerService {
 
         delete this._instances[name];
 
+    }
+
+    /**
+     *
+     * @param keys {Array.<string>}
+     * @param mode {string}
+     * @param value {boolean}
+     * @private
+     */
+    _filterServiceKeysForMode (keys, mode, value) {
+
+        let modeKey = undefined;
+        switch (mode) {
+            case "production": modeKey = "production"; break;
+            case "development": modeKey = "development"; break;
+            default: throw new TypeError(`Unknown mode: "${mode}"`);
+        }
+
+        return _.filter(keys, key => {
+
+            if (!_.has(this._services, key)) {
+                return false;
+            }
+
+            const service = this._services[key];
+
+            return service[modeKey] === value;
+
+        });
+    }
+
+    /**
+     *
+     * @param serviceKeys {Array.<string>}
+     * @param production {undefined|boolean}
+     * @param development {undefined|boolean}
+     * @returns {Array.<string>}
+     * @private
+     */
+    _filterServiceKeys (
+        serviceKeys,
+        {
+            production = undefined,
+            development = undefined
+        }
+    ) {
+
+        if (_.isBoolean(production)) {
+            serviceKeys = this._filterServiceKeysForMode(serviceKeys, "production", production);
+        }
+
+        if (_.isBoolean(development)) {
+            serviceKeys = this._filterServiceKeysForMode(serviceKeys, "development", development);
+        }
+
+        return serviceKeys;
     }
 
     // noinspection JSMethodCanBeStatic

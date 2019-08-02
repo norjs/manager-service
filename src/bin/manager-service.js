@@ -69,6 +69,24 @@ LogicUtils.tryCatch( () => {
      */
     const NODE_LISTEN = process.env.NODE_LISTEN || './socket.sock';
 
+    const HAS_PRODUCTION_ARG = _.some(process.argv, arg => arg === "production");
+    const HAS_DEVELOPMENT_ARG = _.some(process.argv, arg => arg === "development");
+
+    if ( HAS_PRODUCTION_ARG && HAS_DEVELOPMENT_ARG ) {
+        throw new TypeError(`You cannot have both 'production' and 'development' arguments.`);
+    }
+
+    /**
+     * The default environment to start services.
+     *
+     * The Environment Option "NODE_ENV" can be overwritten using a command line argument.
+     *
+     * Defaults to `development`.
+     *
+     * @type {string}
+     */
+    const NODE_ENV = HAS_PRODUCTION_ARG ? 'production' : ( HAS_DEVELOPMENT_ARG ? 'development' : (process.env.NODE_ENV || 'development'));
+
     // noinspection JSValidateTypes
     /**
      *
@@ -103,7 +121,10 @@ LogicUtils.tryCatch( () => {
 
             services[key] = {
                 name: key,
-                path: serviceConfigPath
+                path: serviceConfigPath,
+                production: serviceConfig.production,
+                development: serviceConfig.development,
+                env: serviceConfig.env
             };
 
         });
@@ -115,7 +136,8 @@ LogicUtils.tryCatch( () => {
      * @type {ManagerService}
      */
     const service = new ManagerService({
-        services
+        services,
+        mode: NODE_ENV
     });
 
     /**

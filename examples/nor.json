@@ -11,7 +11,7 @@
     },
     "frontend": {
       "path": "./frontend",
-      "production": true,
+      "production": false,
       "development": true,
       "env": {
         "NODE_LISTEN": "localhost:4000"
