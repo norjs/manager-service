@@ -233,9 +233,12 @@ class ManagerService {
 
                 this._instances[key] = instance;
 
-                // FIXME: We should wait for a timeout until resolving, eg. for 15 seconds, to see if the service start fails.
+                return new Promise( resolve => {
+                    setTimeout(() => {
+                        resolve({name: key, state: this._instances[key] ? "started" : "stopped" } );
+                    }, 1000);
+                });
 
-                return Promise.resolve({name: key, state: "started" } );
             };
 
         });
