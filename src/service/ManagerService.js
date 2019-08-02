@@ -92,34 +92,41 @@ class ManagerService {
 
         TypeUtils.assert(payload, "NorManagerInstallActionObject");
 
-        const promises = _.map(_.keys(this._services), key => {
+        const results = [];
 
-            const service = this._services[key];
+        const steps = _.map(_.keys(this._services), key => {
+            return () => {
 
-            if (!service.path) {
-                return Promise.resolve({name: key, status: -1, error: `No service.path defined!`});
-            }
+                const service = this._services[key];
 
-            const stdoutEnabled = !!payload.stdout;
-
-            const options = {
-                cwd: service.path,
-                stdout: stdoutEnabled
-            };
-
-            return ChildProcessUtils.execute('npm', ['install'], options).then( result => {
-                return {name: key, status: result.status, output: result.stdout, warnings: result.stderr};
-            }).catch( err => {
-                if (err.status) {
-                    return {name: key, status: err.status, error: err.stderr, debug: err.stdout};
-                } else {
-                    return {name: key, status: -1, error: `${err}`};
+                if (!service.path) {
+                    return Promise.resolve({name: key, status: -1, error: `No service.path defined!`});
                 }
-            });
+
+                const stdoutEnabled = !!payload.debug;
+
+                const options = {
+                    cwd: service.path,
+                    stdout: stdoutEnabled
+                };
+
+                return ChildProcessUtils.execute('npm', ['install'], options).then( result => {
+                    return {name: key, status: result.status, debug: result.stdout, warnings: result.stderr};
+                }).catch( err => {
+                    if (err.status) {
+                        return {name: key, status: err.status, error: err.stderr, debug: err.stdout};
+                    } else {
+                        return {name: key, status: -1, error: `${err}`};
+                    }
+                }).then(result => {
+                    results.push(result);
+                });
+
+            };
 
         });
 
-        return Promise.all(promises);
+        return _.reduce(steps, (a, b) => a.then(b), Promise.resolve()).then(() => results);
 
     }
 
