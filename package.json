@@ -28,7 +28,7 @@
   "homepage": "https://github.com/norjs/manager-service#readme",
   "dependencies": {
     "@norjs/types": "^1.0.0",
-    "@norjs/utils": "^1.0.10",
+    "@norjs/utils": "^1.0.12",
     "lodash": "^4.17.15"
   },
   "devDependencies": {
