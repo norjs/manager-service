@@ -28,6 +28,7 @@ const ChildProcessUtils = require('@norjs/utils/ChildProcess');
 require('@norjs/types/NorConfigurationObject.js');
 require('@norjs/types/NorManagerInstallActionObject.js');
 require('@norjs/types/NorManagerStartActionObject.js');
+require('@norjs/types/NorManagerStatusActionObject.js');
 
 /**
  *
@@ -99,7 +100,6 @@ class ManagerService {
     /**
      *
      * @param payload {NorManagerInstallActionObject}
-     * @private
      */
     onInstallAction (payload) {
 
@@ -142,7 +142,6 @@ class ManagerService {
     /**
      *
      * @param payload {NorManagerStartActionObject}
-     * @private
      */
     onStartAction (payload) {
 
@@ -202,12 +201,34 @@ class ManagerService {
 
                 // FIXME: We should wait for a timeout until resolving, eg. for 15 seconds, to see if the service start fails.
 
-                return Promise.resolve({name: key, state: "running" } );
+                return Promise.resolve({name: key, state: "started" } );
             };
 
         });
 
         return ManagerService._collectResults(steps);
+
+    }
+
+    /**
+     *
+     * @param payload {NorManagerStatusActionObject}
+     */
+    onStatusAction (payload) {
+
+        TypeUtils.assert(payload, "NorManagerStatusActionObject");
+
+        return _.map(_.keys(this._services), key => {
+
+            // const service = this._services[key];
+            const instance = _.has(this._instances, key) ? this._instances[key] : undefined;
+
+            return {
+                name: key,
+                state: instance ? 'started' : 'stopped'
+            };
+
+        });
 
     }
 
@@ -238,6 +259,7 @@ class ManagerService {
      */
     static _collectResults (steps) {
 
+        // noinspection JSMismatchedCollectionQueryUpdate
         let results = [];
 
         return _.reduce(
