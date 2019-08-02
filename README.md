@@ -1,8 +1,5 @@
 # @norjs/manager-service
 
-***NOTE!*** This README is a draft. This software is not yet published nor finished; until then this is the complete
-specification for a developer.
-
 This is a micro service which manages other services.
 
 You may use it with [the @norjs/portal-service](https://github.com/norjs/portal-service) which (will eventually) 
@@ -115,4 +112,4 @@ The `nor-manager-service` accepts following environment options:
 
 To test a HTTP service at `localhost:3000`:
 
-`curl -X POST localhost:3000/install -H "Content-Type: application/json" -d '{"payload": {"stdout": true}}'`
+`curl -X POST localhost:3000/status -H "Content-Type: application/json" -d '{"payload": {"debug": true}}'`
