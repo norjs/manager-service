@@ -118,10 +118,14 @@ class ManagerService {
 
         TypeUtils.assert(payload, "NorManagerInstallActionObject");
 
-        const serviceKeys = this._filterServiceKeys(_.keys(this._services), {
-            production: payload.production,
-            development: payload.development
-        });
+        const serviceKeys = this._filterServiceKeys(
+            _.keys(this._services),
+            {
+                production: payload.production,
+                development: payload.development,
+                name: payload.name
+            }
+        );
 
         const steps = _.map(serviceKeys, key => {
             return () => {
@@ -167,7 +171,8 @@ class ManagerService {
 
         const serviceKeys = this._filterServiceKeys(_.keys(this._services), {
             production: payload.production,
-            development: payload.development
+            development: payload.development,
+            name: payload.name
         });
 
         const steps = _.map(serviceKeys, key => {
@@ -243,7 +248,8 @@ class ManagerService {
 
         const serviceKeys = this._filterServiceKeys(_.keys(this._services), {
             production: payload.production,
-            development: payload.development
+            development: payload.development,
+            name: payload.name
         });
 
         return _.map(serviceKeys, key => {
@@ -308,9 +314,32 @@ class ManagerService {
 
     /**
      *
+     * @param keys {Array.<string>}
+     * @param property {string}
+     * @param value {*}
+     * @private
+     */
+    _filterServiceKeysByProperty (keys, property, value) {
+
+        return _.filter(keys, key => {
+
+            if (!_.has(this._services, key)) {
+                return false;
+            }
+
+            const service = this._services[key];
+
+            return service[property] === value;
+
+        });
+    }
+
+    /**
+     *
      * @param serviceKeys {Array.<string>}
      * @param production {undefined|boolean}
      * @param development {undefined|boolean}
+     * @param name {undefined|string}
      * @returns {Array.<string>}
      * @private
      */
@@ -318,9 +347,14 @@ class ManagerService {
         serviceKeys,
         {
             production = undefined,
-            development = undefined
+            development = undefined,
+            name = undefined
         }
     ) {
+
+        if (_.isString(name)) {
+            serviceKeys = this._filterServiceKeysByProperty(serviceKeys, "name", name);
+        }
 
         if (_.isBoolean(production)) {
             serviceKeys = this._filterServiceKeysForMode(serviceKeys, "production", production);
