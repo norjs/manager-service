@@ -107,7 +107,13 @@ class ManagerService {
      * Close the server
      */
     destroy () {
+
+        _.forEach( _.keys(this._instances), instance => {
+            this._removeInstance(instance);
+        });
+
         console.log(LogUtils.getLine(`${ManagerService.getAppName()} destroyed`));
+
     }
 
     /**
@@ -277,9 +283,13 @@ class ManagerService {
      */
     _removeInstance (name) {
 
-        LogicUtils.tryCatch( () => this._instances[name].onDestroy() , err => this._handleError(err) );
+        if (_.has(this._instances, name)) {
 
-        delete this._instances[name];
+            LogicUtils.tryCatch( () => this._instances[name].onDestroy() , err => this._handleError(err) );
+
+            delete this._instances[name];
+
+        }
 
     }
 

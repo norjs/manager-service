@@ -117,7 +117,14 @@ LogicUtils.tryCatch( () => {
              */
             const serviceConfig = config.services[key];
 
-            const serviceConfigPath = PATH.resolve(NOR_MANAGER_SERVICE_PATH, serviceConfig.path);
+            const servicePath = serviceConfig.path;
+
+            const serviceConfigPath = PATH.resolve(
+                NOR_MANAGER_SERVICE_PATH,
+                servicePath.startsWith('.')
+                    ? servicePath
+                    : PATH.join("./node_modules", servicePath)
+            );
 
             services[key] = {
                 name: key,
