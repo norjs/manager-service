@@ -50,37 +50,48 @@ Please note, that if you use `backend` or `frontend`, that will be recognized as
 
 #### Installing services
 
-If you're using NPM dependencies directly, you may not need to run the install step at all. Of course, you'll need to 
-use `npm install` then.
+If you're using NPM package names as a path, you must use `npm install` to install your projects. (See an issue #7 which would add support for the manager to do it for you.)
 
-Running `nor-manager-service install` will run the install command for each service in the development mode.
+Executing an install action for `nor-manager-service` will run the `npm install` command for each matching local service.
 
-`nor-manager-service install production` will do the same in a production mode.
- 
+```
+curl -X POST localhost:3000/install -H "Content-Type: application/json" -d '{"payload":{"development": true}}'
+```
+
+The payload can have any combination of properties: 
+
+ * `name` - Filter by a package name, as a `string`.
+ * `production` - Filter services by production flag, as `true` | `false` | `undefined`
+ * `development` - Filter services by development flag, as `true` | `false` | `undefined`
+ * `debug` - Enable additional information in the response (eg. results from stdout), this may require memory.
+
 #### Starting services
 
-`nor-manager-service start` will start each service in a development mode and open a combined console for each.
+Executing a start action for `nor-manager-service` will start each service and write their logs to the manager's console.
 
-`nor-manager-service start production` will do the same in a production mode.
-
-#### Using with the package.json
-
-You may combine this as a single root `./package.json`:
-
-```json
-{
-  "name": "my-awesome-app",
-  "version": "1.0.0",
-  "description": "My awesome full stack app",
-  "scripts": {
-    "install": "nor-manager-service install",
-    "start": "nor-manager-service start"
-  },
-  "dependencies": {
-    "@norjs/manager-service": "^1.0.10"
-  }
-}
 ```
+curl -X POST localhost:3000/start -H "Content-Type: application/json" -d '{"payload":{"development": true}}'
+```
+
+The payload can have any combination of properties: 
+
+ * `name` - Filter by a package name, as a `string`.
+ * `production` - Filter services by production flag, as `true` | `false` | `undefined`
+ * `development` - Filter services by development flag, as `true` | `false` | `undefined`
+
+#### Requesting status of services
+
+Executing a status action for `nor-manager-service` will display information for each service.
+
+```
+curl -X POST localhost:3000/status -H "Content-Type: application/json" -d '{"payload":{"development": true}}'
+```
+
+The payload can have any combination of properties: 
+
+ * `name` - Filter by a package name, as a `string`.
+ * `production` - Filter services by production flag, as `true` | `false` | `undefined`
+ * `development` - Filter services by development flag, as `true` | `false` | `undefined`
 
 #### Custom environment variables
 
@@ -88,21 +99,9 @@ You can configure custom environment variables with the `env` property.
 
 #### Production and development modes
 
-The configuration should have a boolean property `production` and/or `development` enabled.
+Any action should have a boolean property `production` and/or `development` as a boolean.
 
 Otherwise the service will not be started nor installed unless it is named directly in the command.
-
-If the mode is omitted in a command, `development` will be used.
-
-#### Service naming
-
-The service has a short and full name. The full name is the project name combined using a slash with the sub service 
-name, which is the keyword of the services property.
-
-Eg, `my-awesome-app/backend` and `my-awesome-app/frontend` are two services from the main example.
-
-If one uses the `my-awesome-app` as part of another managed service as a sub service, the name may be combined as
-`some-name/my-awesome-app/backend`.
 
 #### Command line environment options
 
@@ -112,9 +111,7 @@ The `nor-manager-service` accepts following environment options:
  * `NOR_MANAGER_SERVICE_PATH` -- The path to configuration root directory, defaults to directory of `NOR_MANAGER_CONFIG`
  * `NODE_LISTEN` -- Where to start the service. Defaults to `./socket.sock`. Can also be a `hostname:port` or `port` for TCP connections.
  
-### Testing
-
-#### Testing with curl
+### Testing with curl
 
 To test a HTTP service at `localhost:3000`:
 
