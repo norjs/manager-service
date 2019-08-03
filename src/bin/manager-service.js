@@ -21,6 +21,12 @@ const HttpUtils = require('@norjs/utils/Http');
 
 /**
  *
+ * @type {typeof StringUtils}
+ */
+const StringUtils = require('@norjs/utils/String');
+
+/**
+ *
  * @type {typeof ManagerService}
  */
 const ManagerService = require('../service/ManagerService.js');
@@ -69,12 +75,30 @@ LogicUtils.tryCatch( () => {
      */
     const NODE_LISTEN = process.env.NODE_LISTEN || './socket.sock';
 
-    const HAS_PRODUCTION_ARG = _.some(process.argv, arg => arg === "production");
-    const HAS_DEVELOPMENT_ARG = _.some(process.argv, arg => arg === "development");
+    const ARGV = process.argv;
+    const HAS_PRODUCTION_ARG = _.some(ARGV, arg => arg === "production");
+    const HAS_DEVELOPMENT_ARG = _.some(ARGV, arg => arg === "development");
 
     if ( HAS_PRODUCTION_ARG && HAS_DEVELOPMENT_ARG ) {
         throw new TypeError(`You cannot have both 'production' and 'development' arguments.`);
     }
+
+    /**
+     * This is the last --auto-start=true or --auto-start=false from command line arguments.
+     *
+     * If no arguments specified, it will be `undefined`.
+     *
+     * @type {boolean|undefined}
+     */
+    const AUTO_START_ARG = _.last(_.filter(_.filter(ARGV, arg => arg.startsWith('--auto-start=') ).map(arg => StringUtils.parseBoolean(arg.substr('--auto-start='.length))), arg => _.isBoolean(arg)));
+
+    // noinspection JSUnresolvedVariable
+    /**
+     * The value of NOR_MANAGER_AUTO_START, otherwise AUTO_START_ARG, otherwise `true`.
+     *
+     * @type {boolean}
+     */
+    const NOR_MANAGER_AUTO_START = _.isBoolean(AUTO_START_ARG) ? AUTO_START_ARG : StringUtils.parseBoolean(process.env.NOR_MANAGER_AUTO_START, true);
 
     /**
      * The default environment to start services.
@@ -145,7 +169,8 @@ LogicUtils.tryCatch( () => {
      */
     const service = new ManagerService({
         services,
-        mode: NODE_ENV
+        mode: NODE_ENV,
+        autoStart: NOR_MANAGER_AUTO_START
     });
 
     /**

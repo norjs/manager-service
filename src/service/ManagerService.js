@@ -45,10 +45,12 @@ class ManagerService {
      *
      * @param services {Object.<string,NorConfigurationServiceObject>}
      * @param mode {string} The running mode, eg. "production" or "development".
+     * @param autoStart {boolean} If `true`, will start services marked with "autoStart" property at start up
      */
     constructor ({
-        services,
-        mode
+        services = {},
+        mode = "development",
+        autoStart = true
     }) {
 
         /**
@@ -77,6 +79,14 @@ class ManagerService {
         this._mode = mode;
 
         /**
+         * If enabled, will start "autoStart" services at `.onInit()` when the service is initialized.
+         *
+         * @member {boolean}
+         * @private
+         */
+        this._autoStartEnabled = autoStart;
+
+        /**
          *
          * @member {typeof ManagerService}
          */
@@ -101,28 +111,11 @@ class ManagerService {
      */
     onInit () {
 
-        const payload = {
-            autoStart: true
-        };
-
-        // Start services marked with autoStart
-        switch (this._mode) {
-            case "production":
-                payload.production = true;
-                break;
-            case "development":
-                payload.development = true;
-                break;
-            default:
-                throw new TypeUtils(`Unknown mode: "${this._mode}"`);
+        if (this._autoStartEnabled) {
+            this._autoStartServices();
+        } else {
+            console.log(LogUtils.getLine(`Auto start feature disabled.` ));
         }
-
-        console.log(LogUtils.getLine(`Starting ${this._mode} services...` ));
-        this.onStartAction(payload).then( result => {
-            console.log(LogUtils.getLine(`Services started: ${ result.map(result => `${result.name}@${result.state}`).join(', ') }` ));
-        }).catch( err => {
-            console.error(LogUtils.getLine(`Failed to start services: "${err}": `, err));
-        } );
 
     }
 
@@ -449,6 +442,38 @@ class ManagerService {
         ).then(
             () => results
         );
+
+    }
+
+    /**
+     * Generate a start action for auto start services.
+     *
+     * @protected
+     */
+    _autoStartServices () {
+
+        const payload = {
+            autoStart: true
+        };
+
+        // Start services marked with autoStart
+        switch (this._mode) {
+            case "production":
+                payload.production = true;
+                break;
+            case "development":
+                payload.development = true;
+                break;
+            default:
+                throw new TypeUtils(`Unknown mode: "${this._mode}"`);
+        }
+
+        console.log(LogUtils.getLine(`Starting ${this._mode} services...` ));
+        this.onStartAction(payload).then( result => {
+            console.log(LogUtils.getLine(`Services started: ${ result.map(result => `${result.name}@${result.state}`).join(', ') }` ));
+        }).catch( err => {
+            console.error(LogUtils.getLine(`Failed to start services: "${err}": `, err));
+        } );
 
     }
 
