@@ -23,6 +23,7 @@ Configuration file named `nor.json`:
       "path": "./backend",
       "production": true,
       "development": true,
+      "autoStart": true,
       "env": {
         "NODE_LISTEN": "./backend.sock"
       }
@@ -31,6 +32,7 @@ Configuration file named `nor.json`:
       "path": "./frontend",
       "production": true,
       "development": true,
+      "autoStart": true,
       "env": {
         "NODE_LISTEN": "localhost:4000"
       }
