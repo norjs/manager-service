@@ -131,6 +131,7 @@ LogicUtils.tryCatch( () => {
                 path: serviceConfigPath,
                 production: serviceConfig.production,
                 development: serviceConfig.development,
+                autoStart: serviceConfig.autoStart,
                 env: serviceConfig.env
             };
 
@@ -175,5 +176,7 @@ LogicUtils.tryCatch( () => {
         LogicUtils.tryCatch( () => server.close(), err => ProcessUtils.handleError(err) );
 
     });
+
+    service.onInit();
 
 }, err => ProcessUtils.handleError(err) );

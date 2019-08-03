@@ -93,8 +93,42 @@ class ManagerService {
         return '@norjs/manager-service';
     }
 
+    /**
+     * Called after all the parts of the service are initialized.
+     *
+     * This will start the process to auto start services, etc.
+     *
+     */
+    onInit () {
+
+        const payload = {
+            autoStart: true
+        };
+
+        // Start services marked with autoStart
+        switch (this._mode) {
+            case "production":
+                payload.production = true;
+                break;
+            case "development":
+                payload.development = true;
+                break;
+            default:
+                throw new TypeUtils(`Unknown mode: "${this._mode}"`);
+        }
+
+        console.log(LogUtils.getLine(`Starting ${this._mode} services...` ));
+        this.onStartAction(payload).then( result => {
+            console.log(LogUtils.getLine(`Services started: ${ result.map(result => `${result.name}@${result.state}`).join(', ') }` ));
+        }).catch( err => {
+            console.error(LogUtils.getLine(`Failed to start services: "${err}": `, err));
+        } );
+
+    }
+
     // noinspection JSMethodCanBeStatic
     /**
+     * Called after the HTTP server is listening somewhere for this service.
      *
      * @param port {string} A string which presents where the service is running
      */
@@ -129,6 +163,7 @@ class ManagerService {
             {
                 production: payload.production,
                 development: payload.development,
+                autoStart: payload.autoStart,
                 name: payload.name
             }
         );
@@ -178,6 +213,7 @@ class ManagerService {
         const serviceKeys = this._filterServiceKeys(_.keys(this._services), {
             production: payload.production,
             development: payload.development,
+            autoStart: payload.autoStart,
             name: payload.name
         });
 
@@ -258,6 +294,7 @@ class ManagerService {
         const serviceKeys = this._filterServiceKeys(_.keys(this._services), {
             production: payload.production,
             development: payload.development,
+            autoStart: payload.autoStart,
             name: payload.name
         });
 
@@ -309,6 +346,7 @@ class ManagerService {
         switch (mode) {
             case "production": modeKey = "production"; break;
             case "development": modeKey = "development"; break;
+            case "autoStart": modeKey = "autoStart"; break;
             default: throw new TypeError(`Unknown mode: "${mode}"`);
         }
 
@@ -352,6 +390,7 @@ class ManagerService {
      * @param serviceKeys {Array.<string>}
      * @param production {undefined|boolean}
      * @param development {undefined|boolean}
+     * @param autoStart {undefined|boolean}
      * @param name {undefined|string}
      * @returns {Array.<string>}
      * @private
@@ -361,6 +400,7 @@ class ManagerService {
         {
             production = undefined,
             development = undefined,
+            autoStart = undefined,
             name = undefined
         }
     ) {
@@ -375,6 +415,10 @@ class ManagerService {
 
         if (_.isBoolean(development)) {
             serviceKeys = this._filterServiceKeysForMode(serviceKeys, "development", development);
+        }
+
+        if (_.isBoolean(autoStart)) {
+            serviceKeys = this._filterServiceKeysForMode(serviceKeys, "autoStart", autoStart);
         }
 
         return serviceKeys;

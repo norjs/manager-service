@@ -13,6 +13,7 @@
       "path": "./frontend",
       "production": false,
       "development": true,
+      "autoStart": true,
       "env": {
         "NODE_LISTEN": "localhost:4000"
       }
