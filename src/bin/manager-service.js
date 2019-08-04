@@ -53,6 +53,12 @@ require('@norjs/types/NorConfigurationObject.js');
  */
 const PATH = require('path');
 
+/**
+ *
+ * @type {FileSystemModule}
+ */
+const FS = require('fs');
+
 LogicUtils.tryCatch( () => {
 
     // noinspection JSUnresolvedVariable
@@ -60,7 +66,7 @@ LogicUtils.tryCatch( () => {
      *
      * @type {string}
      */
-    const NOR_MANAGER_CONFIG = process.env.NOR_MANAGER_CONFIG || './nor.json';
+    const NOR_MANAGER_CONFIG = process.env.NOR_MANAGER_CONFIG || ( FS.existsSync('./nor.js') ? './nor.js' : undefined ) || './nor.json';
 
     // noinspection JSUnresolvedVariable
     /**

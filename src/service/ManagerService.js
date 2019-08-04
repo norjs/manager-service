@@ -280,8 +280,6 @@ class ManagerService {
 
                 });
 
-                console.log(`WOOT: pid: ${child.pid}`);
-
                 // noinspection UnnecessaryLocalVariableJS
                 const instance = new ServiceInstance({
                     name: key,
