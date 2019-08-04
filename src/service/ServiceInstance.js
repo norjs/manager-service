@@ -26,6 +26,7 @@ class ServiceInstance {
     /**
      *
      * @param name {string}
+     * @param childProcess {NorChildProcess}
      */
     constructor ({
         name,
@@ -43,10 +44,17 @@ class ServiceInstance {
         /**
          * The NodeJS child process object
          *
-         * @member {ChildProcess}
+         * @member {NorChildProcess}
          * @private
          */
         this._childProcess = childProcess;
+
+        /**
+         *
+         * @member {number|undefined}
+         * @private
+         */
+        this._pid = this._childProcess ? this._childProcess.pid : undefined;
 
     }
 
@@ -60,7 +68,7 @@ class ServiceInstance {
 
     /**
      *
-     * @returns {ChildProcess}
+     * @returns {NorChildProcess}
      */
     get childProcess () {
         return this._childProcess;
@@ -74,6 +82,14 @@ class ServiceInstance {
      */
     onDestroy () {
         this._childProcess = undefined;
+    }
+
+    /**
+     * Get the pid of the child process
+     * @returns {number|undefined}
+     */
+    getPid () {
+        return this._pid;
     }
 
 }

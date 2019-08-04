@@ -29,6 +29,7 @@ require('@norjs/types/NorConfigurationObject.js');
 require('@norjs/types/NorManagerInstallActionObject.js');
 require('@norjs/types/NorManagerStartActionObject.js');
 require('@norjs/types/NorManagerStatusActionObject.js');
+require('@norjs/types/NorManagerStopActionObject.js');
 
 /**
  *
@@ -135,6 +136,8 @@ class ManagerService {
      */
     destroy () {
 
+        LogicUtils.tryCatch( () => this._stopServices(), err => this._handleError(err) );
+
         _.forEach( _.keys(this._instances), instance => {
             this._removeInstance(instance);
         });
@@ -177,7 +180,13 @@ class ManagerService {
                     stdout: stdoutEnabled
                 };
 
-                return ChildProcessUtils.execute('npm', ['install'], options).then( result => {
+                /**
+                 *
+                 * @type {NorChildProcess}
+                 */
+                const child = ChildProcessUtils.execute('npm', ['install'], options);
+
+                return child.resultPromise.then( result => {
                     return {name: key, status: result.status, debug: result.stdout, warnings: result.stderr};
                 }).catch( err => {
                     if (err.status) {
@@ -227,15 +236,29 @@ class ManagerService {
                     cwd: service.path,
                     env: service.env ? _.cloneDeep(service.env) : {},
                     stdout: (data) => {
-                        console.log(LogUtils.getLine(`[${key}] '${data}'`));
+                        data.split('\n').filter(row => !!_.trim(row)).forEach(row => {
+                            console.log(LogUtils.getLine(`[${key}] '${row}'`));
+                        });
                     },
                     stderr: (data) => {
-                        console.error(LogUtils.getLine(`[${key}] '${data}'`));
+                        data.split('\n').filter(row => !!_.trim(row)).forEach(row => {
+                            console.error(LogUtils.getLine(`[${key}] '${row}'`));
+                        });
                     }
                 };
 
-                const promise = ChildProcessUtils.execute('npm', ['start'], options).then( result => {
-                    console.log(LogUtils.getLine(`Service "${key}" stopped with a status ${result.status}`));
+                /**
+                 *
+                 * @type {NorChildProcess}
+                 */
+                const child = ChildProcessUtils.execute('npm', ['start'], options);
+
+                child.resultPromise.then( result => {
+                    if (result && result.status !== undefined) {
+                        console.log(LogUtils.getLine(`Service "${key}" stopped with a status ${result ? result.status : undefined}`));
+                    } else {
+                        console.error(LogUtils.getLine(`Service "${key}" stopped with an unexpected result status:`), result);
+                    }
                 }, err => {
                     if (err.status) {
                         if (err.stderr) {
@@ -244,20 +267,25 @@ class ManagerService {
                             console.error(LogUtils.getLine(`Service "${key}" stopped with a status ${err.status}`));
                         }
                     } else {
-                        console.error(LogUtils.getLine(`Service "${key}" stopped with an error: `, err));
+                        console.error(LogUtils.getLine(`Service "${key}" stopped with an error: `), err);
                     }
                 }).catch(err => {
-                    console.error(LogUtils.getLine(`Service "${key}" had an exception: `, err));
+                    console.error(LogUtils.getLine(`Service "${key}" had an exception: `), err);
+                    if (err.stack) {
+                        console.debug(LogUtils.getLine(`Exception with stack: `), err.stack);
+                    }
                 }).finally(() => {
 
                     this._removeInstance(key);
 
                 });
 
+                console.log(`WOOT: pid: ${child.pid}`);
+
                 // noinspection UnnecessaryLocalVariableJS
                 const instance = new ServiceInstance({
                     name: key,
-                    childProcess: promise.CHILD
+                    childProcess: child
                 });
 
                 this._instances[key] = instance;
@@ -305,6 +333,44 @@ class ManagerService {
             };
 
         });
+
+    }
+
+    /**
+     *
+     * @param payload {NorManagerStopActionObject}
+     * @returns {Promise.<Array.<{name: string, state: string}>>}
+     */
+    onStopAction (payload) {
+
+        TypeUtils.assert(payload, "NorManagerStopActionObject");
+
+        const serviceKeys = this._filterServiceKeys(_.keys(this._instances), {
+            production: payload.production,
+            development: payload.development,
+            name: payload.name
+        });
+
+        _.map(serviceKeys, key => {
+            const instance = this._instances[key];
+            LogicUtils.tryCatch( () => {
+
+                const pid = instance.getPid();
+
+                console.log(LogUtils.getLine(`Stopping service "${key}" with pid ${pid}...`));
+
+                process.kill(pid, 'SIGTERM');
+
+            }, err => this._handleError(err) );
+        });
+
+        return Promise.resolve(_.map(
+            serviceKeys,
+            key => ({
+                name: key,
+                state: _.has(this._instances, key) ? 'started' : 'stopped'
+            })
+        ));
 
     }
 
@@ -452,7 +518,7 @@ class ManagerService {
      */
     _autoStartServices () {
 
-        const payload = {
+        let payload = {
             autoStart: true
         };
 
@@ -473,6 +539,24 @@ class ManagerService {
             console.log(LogUtils.getLine(`Services started: ${ result.map(result => `${result.name}@${result.state}`).join(', ') }` ));
         }).catch( err => {
             console.error(LogUtils.getLine(`Failed to start services: "${err}": `, err));
+        } );
+
+    }
+
+    /**
+     *
+     * @protected
+     */
+    _stopServices () {
+
+        let payload = {};
+
+        console.log(LogUtils.getLine(`Stopping services...` ));
+
+        this.onStopAction(payload).then( result => {
+            console.log(LogUtils.getLine(`Services stopped: ${ result.map(result => `${result.name}@${result.state}`).join(', ') }` ));
+        }).catch( err => {
+            console.error(LogUtils.getLine(`Failed to stop services: "${err}": `, err));
         } );
 
     }

@@ -1,4 +1,3 @@
-const _ = require('lodash');
 
 /**
  *
@@ -29,6 +28,7 @@ require('@norjs/types/NorConfigurationObject.js');
 require('@norjs/types/NorManagerInstallActionObject.js');
 require('@norjs/types/NorManagerStartActionObject.js');
 require('@norjs/types/NorManagerStatusActionObject.js');
+require('@norjs/types/NorManagerStopActionObject.js');
 
 /**
  *
@@ -79,6 +79,10 @@ class HttpManagerAdapter {
                         {
                             path: "/start/",
                             method: "POST"
+                        },
+                        {
+                            path: "/stop/",
+                            method: "POST"
                         }
                     ]
                 },
@@ -96,6 +100,11 @@ class HttpManagerAdapter {
                 "/start/": {
                     path: "/start/",
                     method: "POST"
+                },
+
+                "/stop/": {
+                    path: "/stop/",
+                    method: "POST"
                 }
 
             },
@@ -103,7 +112,8 @@ class HttpManagerAdapter {
             POST: {
                 "/install/": (req, res) => this._onInstallRequest(req, res),
                 "/start/": (req, res) => this._onStartRequest(req, res),
-                "/status/": (req, res) => this._onStatusRequest(req, res)
+                "/status/": (req, res) => this._onStatusRequest(req, res),
+                "/stop/": (req, res) => this._onStopRequest(req, res)
             }
 
         };
@@ -118,7 +128,10 @@ class HttpManagerAdapter {
      */
     onRequest (req, res) {
 
-        console.log(LogUtils.getLine(`Request "${req.method} ${req.url}" started`));
+        // noinspection JSUnresolvedVariable
+        const method = req.method;
+
+        console.log(LogUtils.getLine(`Request "${method} ${req.url}" started`));
 
         return HttpUtils.routeRequest(HttpUtils.getRequestAction(req), this._routes, req, res);
 
@@ -165,6 +178,19 @@ class HttpManagerAdapter {
 
     /**
      *
+     * @param req {HttpRequestObject}
+     * @param res {HttpResponseObject}
+     * @returns {Promise<{payload: *}>}
+     * @private
+     */
+    _onStopRequest (req, res) {
+        return HttpUtils.getRequestDataAsJson(req).then(
+            data => this._onStopAction(data ? data.payload : {})
+        ).then(payload => ({payload}) );
+    }
+
+    /**
+     *
      * @param payload {NorManagerInstallActionObject}
      * @private
      */
@@ -191,6 +217,16 @@ class HttpManagerAdapter {
     _onStartAction (payload) {
         TypeUtils.assert(payload, "NorManagerStartActionObject");
         return this._manager.onStartAction(payload);
+    }
+
+    /**
+     *
+     * @param payload {NorManagerStopActionObject}
+     * @private
+     */
+    _onStopAction (payload) {
+        TypeUtils.assert(payload, "NorManagerStopActionObject");
+        return this._manager.onStopAction(payload);
     }
 
 }
