@@ -2,8 +2,8 @@
 
 This is a micro service which manages other services.
 
-You may use it with [the @norjs/portal-service](https://github.com/norjs/portal-service) which (will eventually) 
-implement the routing part of the configuration file, once it has support for this service.
+You may also use [@norjs/portal-service](https://github.com/norjs/portal-service) to
+implement the routing part of the configuration file.
 
 ### Install
 
