@@ -1,63 +1,19 @@
-#!/usr/bin/env node
+#!/usr/bin/env -S node -r esm
 
-const _ = require('lodash');
-
-/**
- *
- * @type {typeof TypeUtils}
- */
-const TypeUtils = require("@norjs/utils/Type");
-
-/**
- *
- * @type {typeof LogicUtils}
- */
-const LogicUtils = require('@norjs/utils/Logic');
-
-/**
- *
- * @type {typeof HttpUtils}
- */
-const HttpUtils = require('@norjs/utils/Http');
-
-/**
- *
- * @type {typeof StringUtils}
- */
-const StringUtils = require('@norjs/utils/String');
-
-/**
- *
- * @type {typeof ManagerService}
- */
-const ManagerService = require('../service/ManagerService.js');
-
-/**
- *
- * @type {typeof HttpManagerAdapter}
- */
-const HttpManagerAdapter = require('../service/HttpManagerAdapter.js');
-
-/**
- *
- * @type {typeof ProcessUtils}
- */
-const ProcessUtils = require('@norjs/utils/Process');
+import _ from 'lodash';
+import TypeUtils from "@norjs/utils/Type";
+import LogicUtils from '@norjs/utils/Logic';
+import HttpUtils from '@norjs/utils/Http';
+import StringUtils from '@norjs/utils/String';
+import ManagerService from '../service/ManagerService.js';
+import HttpManagerAdapter from '../service/HttpManagerAdapter.js';
+import ProcessUtils from '@norjs/utils/Process';
+import PATH from 'path';
+import FS from 'fs';
+import HTTP from 'http';
 
 // Types and interfaces
-require('@norjs/types/NorConfigurationObject.js');
-
-/**
- *
- * @type {PathModule}
- */
-const PATH = require('path');
-
-/**
- *
- * @type {FileSystemModule}
- */
-const FS = require('fs');
+import '@norjs/types/NorConfigurationObject.js';
 
 LogicUtils.tryCatch( () => {
 
@@ -125,12 +81,6 @@ LogicUtils.tryCatch( () => {
      */
     const config = ProcessUtils.requireFile(NOR_MANAGER_CONFIG);
     TypeUtils.assert(config, "NorConfigurationObject");
-
-    /**
-     *
-     * @type {HttpServerModule & HttpClientModule}
-     */
-    const HTTP = require('http');
 
     /**
      * Services by their name

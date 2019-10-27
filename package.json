@@ -7,7 +7,7 @@
     "nor-manager-service": "./src/bin/manager-service.js"
   },
   "scripts": {
-    "start": "node ./src/bin/manager-service.js",
+    "start": "node -r esm ./src/bin/manager-service.js",
     "test": "mocha test/**/*.spec.js",
     "test-watch": "mocha --watch-extensions js --watch test/**/*.spec.js"
   },
@@ -27,8 +27,9 @@
   },
   "homepage": "https://github.com/norjs/manager-service#readme",
   "dependencies": {
-    "@norjs/types": "^1.0.14",
-    "@norjs/utils": "^1.0.14",
+    "@norjs/types": "^1.0.15",
+    "@norjs/utils": "^1.0.15",
+    "esm": "^3.2.25",
     "lodash": "^4.17.15"
   },
   "devDependencies": {

@@ -1,39 +1,18 @@
-
-/**
- *
- * @type {typeof TypeUtils}
- */
-const TypeUtils = require("@norjs/utils/Type");
-
-/**
- *
- * @type {typeof LogicUtils}
- */
-const LogicUtils = require('@norjs/utils/Logic');
-
-/**
- *
- * @type {typeof LogUtils}
- */
-const LogUtils = require('@norjs/utils/Log');
-
-/**
- *
- * @type {typeof HttpUtils}
- */
-const HttpUtils = require('@norjs/utils/Http');
+import TypeUtils from "@norjs/utils/Type";
+import LogUtils from '@norjs/utils/Log';
+import HttpUtils from '@norjs/utils/Http';
 
 // Types and interfaces
-require('@norjs/types/NorConfigurationObject.js');
-require('@norjs/types/NorManagerInstallActionObject.js');
-require('@norjs/types/NorManagerStartActionObject.js');
-require('@norjs/types/NorManagerStatusActionObject.js');
-require('@norjs/types/NorManagerStopActionObject.js');
+import '@norjs/types/NorConfigurationObject.js';
+import '@norjs/types/NorManagerInstallActionObject.js';
+import '@norjs/types/NorManagerStartActionObject.js';
+import '@norjs/types/NorManagerStatusActionObject.js';
+import '@norjs/types/NorManagerStopActionObject.js';
 
 /**
  *
  */
-class HttpManagerAdapter {
+export class HttpManagerAdapter {
 
     /**
      *
@@ -235,4 +214,4 @@ class HttpManagerAdapter {
  *
  * @type {typeof HttpManagerAdapter}
  */
-module.exports = HttpManagerAdapter;
+export default HttpManagerAdapter;

@@ -1,23 +1,3 @@
-const _ = require('lodash');
-
-/**
- *
- * @type {typeof TypeUtils}
- */
-const TypeUtils = require("@norjs/utils/Type");
-
-/**
- *
- * @type {typeof LogicUtils}
- */
-const LogicUtils = require('@norjs/utils/Logic');
-
-/**
- *
- * @type {typeof LogUtils}
- */
-const LogUtils = require('@norjs/utils/Log');
-
 /**
  *
  */
@@ -94,8 +74,4 @@ class ServiceInstance {
 
 }
 
-/**
- *
- * @type {typeof ServiceInstance}
- */
-module.exports = ServiceInstance;
+export default ServiceInstance;
