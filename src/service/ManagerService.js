@@ -213,12 +213,12 @@ class ManagerService {
                     env: service.env ? _.cloneDeep(service.env) : {},
                     stdout: (data) => {
                         data.split('\n').filter(row => !!_.trim(row)).forEach(row => {
-                            console.log(LogUtils.getLine(`[${key}] '${row}'`));
+                            console.log(LogUtils.getLine(`[${key}] ${row}`));
                         });
                     },
                     stderr: (data) => {
                         data.split('\n').filter(row => !!_.trim(row)).forEach(row => {
-                            console.error(LogUtils.getLine(`[${key}] '${row}'`));
+                            console.error(LogUtils.getLine(`[${key}] ${row}`));
                         });
                     }
                 };
