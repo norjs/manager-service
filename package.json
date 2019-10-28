@@ -1,6 +1,6 @@
 {
   "name": "@norjs/manager-service",
-  "version": "1.0.15",
+  "version": "1.0.16",
   "description": "A micro service which manages other services",
   "main": "./src/index.js",
   "bin": {
@@ -27,8 +27,8 @@
   },
   "homepage": "https://github.com/norjs/manager-service#readme",
   "dependencies": {
-    "@norjs/types": "^1.0.15",
-    "@norjs/utils": "^1.0.15",
+    "@norjs/types": "^1.0.16",
+    "@norjs/utils": "^1.0.16",
     "esm": "^3.2.25",
     "lodash": "^4.17.15"
   },
