@@ -7,7 +7,7 @@
     "nor-manager-service": "./src/bin/manager-service.js"
   },
   "scripts": {
-    "start": "node -r esm ./src/bin/main.js",
+    "start": "node -r esm src/bin/manager-main.js",
     "test": "mocha test/**/*.spec.js",
     "test-watch": "mocha --watch-extensions js --watch test/**/*.spec.js"
   },

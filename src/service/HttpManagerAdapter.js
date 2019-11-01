@@ -9,6 +9,8 @@ import '@norjs/types/NorManagerStartActionObject.js';
 import '@norjs/types/NorManagerStatusActionObject.js';
 import '@norjs/types/NorManagerStopActionObject.js';
 
+const nrLog = LogUtils.getLogger('HttpManagerAdapter');
+
 /**
  *
  */
@@ -99,6 +101,12 @@ export class HttpManagerAdapter {
 
     }
 
+    destroy () {
+
+        this._manager = undefined;
+
+    }
+
     /**
      *
      * @param req {HttpRequestObject}
@@ -110,7 +118,7 @@ export class HttpManagerAdapter {
         // noinspection JSUnresolvedVariable
         const method = req.method;
 
-        console.log(LogUtils.getLine(`Request "${method} ${req.url}" started`));
+        nrLog.info(`Request "${method} ${req.url}" started`);
 
         return HttpUtils.routeRequest(HttpUtils.getRequestAction(req), this._routes, req, res);
 

@@ -3,6 +3,7 @@ import TypeUtils from "@norjs/utils/Type";
 import LogicUtils from '@norjs/utils/Logic';
 import LogUtils from '@norjs/utils/Log';
 import ChildProcessUtils from '@norjs/utils/ChildProcess';
+import ServiceInstance from './ServiceInstance.js';
 
 // Types and interfaces
 import '@norjs/types/NorConfigurationObject.js';
@@ -11,7 +12,7 @@ import '@norjs/types/NorManagerStartActionObject.js';
 import '@norjs/types/NorManagerStatusActionObject.js';
 import '@norjs/types/NorManagerStopActionObject.js';
 
-import ServiceInstance from './ServiceInstance.js';
+const nrLog = LogUtils.getLogger('ManagerService');
 
 /**
  *
@@ -91,7 +92,7 @@ class ManagerService {
         if (this._autoStartEnabled) {
             this._autoStartServices();
         } else {
-            console.log(LogUtils.getLine(`Auto start feature disabled.` ));
+            nrLog.info(`Auto start feature disabled.` );
         }
 
     }
@@ -103,7 +104,7 @@ class ManagerService {
      * @param port {string} A string which presents where the service is running
      */
     onListen (port) {
-        console.log(LogUtils.getLine(`${ManagerService.getAppName()} running at ${port}` ));
+        nrLog.info(`${ManagerService.getAppName()} running at ${port}` );
     }
 
     // noinspection JSMethodCanBeStatic
@@ -118,7 +119,10 @@ class ManagerService {
             this._removeInstance(instance);
         });
 
-        console.log(LogUtils.getLine(`${ManagerService.getAppName()} destroyed`));
+        nrLog.trace(`${ManagerService.getAppName()} destroyed`);
+
+        this._services = undefined;
+        this._instances = undefined;
 
     }
 
@@ -211,14 +215,15 @@ class ManagerService {
                 const options = {
                     cwd: service.path,
                     env: service.env ? _.cloneDeep(service.env) : {},
+                    stdin: true,
                     stdout: (data) => {
                         data.split('\n').filter(row => !!_.trim(row)).forEach(row => {
-                            console.log(LogUtils.getLine(`[${key}] ${row}`));
+                            nrLog.debug(`#${key} ${row}` );
                         });
                     },
                     stderr: (data) => {
                         data.split('\n').filter(row => !!_.trim(row)).forEach(row => {
-                            console.error(LogUtils.getLine(`[${key}] ${row}`));
+                            nrLog.error(`[${key}] ${row}`);
                         });
                     }
                 };
@@ -231,25 +236,28 @@ class ManagerService {
 
                 child.resultPromise.then( result => {
                     if (result && result.status !== undefined) {
-                        console.log(LogUtils.getLine(`Service "${key}" stopped with a status ${result ? result.status : undefined}`));
+                        nrLog.info(`Service "${key}" stopped with a status ${result ? result.status : undefined}`);
                     } else {
-                        console.error(LogUtils.getLine(`Service "${key}" stopped with an unexpected result status:`), result);
+                        nrLog.error(`Service "${key}" stopped with an unexpected result status:`, result);
                     }
                 }, err => {
                     if (err.status) {
                         if (err.stderr) {
-                            console.error(LogUtils.getLine(`Service "${key}" stopped with a status ${err.status}: "${err.stderr}"`));
+                            nrLog.error(`Service "${key}" stopped with a status ${err.status}: "${err.stderr}"`);
                         } else {
-                            console.error(LogUtils.getLine(`Service "${key}" stopped with a status ${err.status}`));
+                            nrLog.error(`Service "${key}" stopped with a status ${err.status}`);
                         }
                     } else {
-                        console.error(LogUtils.getLine(`Service "${key}" stopped with an error: `), err);
+                        nrLog.error(`Service "${key}" stopped with an error: `, err);
                     }
                 }).catch(err => {
-                    console.error(LogUtils.getLine(`Service "${key}" had an exception: `), err);
+
                     if (err.stack) {
-                        console.debug(LogUtils.getLine(`Exception with stack: `), err.stack);
+                        nrLog.error(`Service "${key}" had an error: `, err.stack);
+                    } else {
+                        nrLog.error(`Service "${key}" had an error: `, err);
                     }
+
                 }).finally(() => {
 
                     this._removeInstance(key);
@@ -331,9 +339,15 @@ class ManagerService {
 
                 const pid = instance.getPid();
 
-                console.log(LogUtils.getLine(`Stopping service "${key}" with pid ${pid}...`));
+                nrLog.debug(`Stopping service "${key}" with pid ${pid} ...`);
 
-                process.kill(pid, 'SIGTERM');
+                if (instance.hasStdIn()) {
+
+                    LogicUtils.tryCatch( () => instance.sendCtrlC(), err => this._handleError(err));
+
+                }
+
+                LogicUtils.tryCatch( () => instance.killGroup(), err => this._handleError(err));
 
             }, err => this._handleError(err) );
         });
@@ -459,7 +473,7 @@ class ManagerService {
 
     // noinspection JSMethodCanBeStatic
     _handleError (err) {
-        console.error(LogUtils.getLine(`Exception: "${err}": `, err));
+        nrLog.error(`Exception: "${err}": `, err);
     }
 
     /**
@@ -508,11 +522,11 @@ class ManagerService {
                 throw new TypeUtils(`Unknown mode: "${this._mode}"`);
         }
 
-        console.log(LogUtils.getLine(`Starting ${this._mode} services...` ));
+        nrLog.trace(`Starting ${this._mode} services...` );
         this.onStartAction(payload).then( result => {
-            console.log(LogUtils.getLine(`Services started: ${ result.map(result => `${result.name}@${result.state}`).join(', ') }` ));
+            nrLog.info(`Services started: ${ result.map(result => `${result.name}@${result.state}`).join(', ') }` );
         }).catch( err => {
-            console.error(LogUtils.getLine(`Failed to start services: "${err}": `, err));
+            nrLog.error(`Failed to start services: "${err}": `, err);
         } );
 
     }
@@ -525,12 +539,12 @@ class ManagerService {
 
         let payload = {};
 
-        console.log(LogUtils.getLine(`Stopping services...` ));
+        nrLog.trace(`Stopping services...` );
 
         this.onStopAction(payload).then( result => {
-            console.log(LogUtils.getLine(`Services stopped: ${ result.map(result => `${result.name}@${result.state}`).join(', ') }` ));
+            nrLog.debug(`Services stopped: ${ result.map(result => `${result.name}@${result.state}`).join(', ') }` );
         }).catch( err => {
-            console.error(LogUtils.getLine(`Failed to stop services: "${err}": `, err));
+            nrLog.error(`Failed to stop services: "${err}": `, err);
         } );
 
     }

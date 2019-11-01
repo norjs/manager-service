@@ -1,7 +1,12 @@
+import LogUtils from "@norjs/utils/Log";
+import LogicUtils from "@norjs/utils/Logic";
+
+const nrLog = LogUtils.getLogger('ServiceInstance');
+
 /**
  *
  */
-class ServiceInstance {
+export class ServiceInstance {
 
     /**
      *
@@ -61,7 +66,11 @@ class ServiceInstance {
      *
      */
     onDestroy () {
+
+        LogicUtils.tryCatch(() => this._childProcess.destroy(), err => nrLog.error(err));
+
         this._childProcess = undefined;
+
     }
 
     /**
@@ -71,6 +80,50 @@ class ServiceInstance {
     getPid () {
         return this._pid;
     }
+
+    /**
+     *
+     * @param signal {number|string}
+     */
+    kill (signal = 'SIGTERM') {
+
+        nrLog.trace(`Killing pid ${this._pid} with signal ${signal}`);
+
+        this._childProcess.kill(signal);
+
+    }
+
+    /**
+     * Sends a signal to the group of the pid.
+     *
+     * *NOTE!* The internal child process must be started with detached mode.
+     *
+     * @param signal {number|string}
+     */
+    killGroup (signal = 'SIGTERM') {
+
+        nrLog.trace(`Killing pid group for ${this._pid} with signal ${signal}`);
+
+        this._childProcess.killGroup(signal);
+
+    }
+
+    hasStdIn () {
+        return this._childProcess.hasStdIn();
+    }
+
+    /**
+     * Send CTRL-C to sub process.
+     */
+    sendCtrlC () {
+
+        nrLog.trace(`Sending CTRL-C to ${this._pid}`);
+
+        this._childProcess.sendCtrlC();
+
+    }
+
+
 
 }
 

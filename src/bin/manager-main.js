@@ -155,6 +155,8 @@ LogicUtils.tryCatch( () => {
 
         LogicUtils.tryCatch( () => server.close(), err => ProcessUtils.handleError(err) );
 
+        LogicUtils.tryCatch( () => httpManagerAdapter.destroy(), err => ProcessUtils.handleError(err) );
+
     });
 
     service.onInit();
