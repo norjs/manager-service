@@ -9,9 +9,12 @@ import ProcessUtils from '@norjs/utils/Process';
 import PATH from 'path';
 import FS from 'fs';
 import HTTP from 'http';
+import LogUtils from "@norjs/utils/Log";
 
 // Types and interfaces
 import '@norjs/types/NorConfigurationObject.js';
+
+const nrLog = LogUtils.getLogger("manager-service");
 
 LogicUtils.tryCatch( () => {
 
@@ -142,6 +145,15 @@ LogicUtils.tryCatch( () => {
         HTTP,
         (req, res) => httpManagerAdapter.onRequest(req, res)
     );
+
+    server.on('error', err => {
+        const stack = err ? err.stack : undefined;
+        if (stack) {
+            nrLog.error(`Error: `, stack);
+        } else {
+            nrLog.error(`Error: `, err);
+        }
+    });
 
     // Start listening
     HttpUtils.listen(server, NODE_LISTEN, () => {

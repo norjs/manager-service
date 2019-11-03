@@ -215,7 +215,6 @@ class ManagerService {
                 const options = {
                     cwd: service.path,
                     env: service.env ? _.cloneDeep(service.env) : {},
-                    stdin: true,
                     stdout: (data) => {
                         data.split('\n').filter(row => !!_.trim(row)).forEach(row => {
                             nrLog.debug(`#${key} ${row}` );
