@@ -11,6 +11,7 @@ import '@norjs/types/NorManagerInstallActionObject.js';
 import '@norjs/types/NorManagerStartActionObject.js';
 import '@norjs/types/NorManagerStatusActionObject.js';
 import '@norjs/types/NorManagerStopActionObject.js';
+import {LogLevel} from "@norjs/utils/src/Logger";
 
 const nrLog = LogUtils.getLogger('ManagerService');
 
@@ -217,12 +218,12 @@ class ManagerService {
                     env: service.env ? _.cloneDeep(service.env) : {},
                     stdout: (data) => {
                         data.split('\n').filter(row => !!_.trim(row)).forEach(row => {
-                            nrLog.debug(`#${key} ${row}` );
+                            this._writeOutsideLog(LogLevel.DEBUG, key, row);
                         });
                     },
                     stderr: (data) => {
                         data.split('\n').filter(row => !!_.trim(row)).forEach(row => {
-                            nrLog.error(`[${key}] ${row}`);
+                            this._writeOutsideLog(LogLevel.ERROR, key, row);
                         });
                     }
                 };
@@ -545,6 +546,121 @@ class ManagerService {
         }).catch( err => {
             nrLog.error(`Failed to stop services: "${err}": `, err);
         } );
+
+    }
+
+    /**
+     *
+     * @param defaultLevel {LogLevel|string}
+     * @param key {string}
+     * @param row {string}
+     * @private
+     */
+    _writeOutsideLog (defaultLevel, key, row) {
+
+        //nrLog.trace(`._writeOutsideLog(): defaultLevel: "${defaultLevel}"`);
+        //nrLog.trace(`._writeOutsideLog(): key: "${key}"`);
+        //nrLog.trace(`._writeOutsideLog(): row: "${row}"`);
+
+        /**
+         *
+         * @type {RegExp}
+         */
+        const re = /^ *(\[([0-9]{4}-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]*(\.[0-9]*)?Z)] *)*(\[(TRACE|DEBUG|INFO|WARN|ERROR)] *)*/i;
+
+        let time = undefined;
+        let level = defaultLevel;
+
+        const matches = row.match(re);
+
+        //nrLog.trace(`._writeOutsideLog(): matches: `, matches);
+
+        if ( matches && _.isArray(matches) ) {
+
+            _.each(matches.slice(1), value => {
+
+                if (value) {
+
+                    if ( value[0] === "." || value[0] === '[' ) {
+
+                        // Ignore
+
+                    } else if ( value.match(/^[0-9]{4}-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]*(\.[0-9]*)?Z/i) ) {
+
+                        //nrLog.trace(`._writeOutsideLog(): time = "${value}"`);
+                        time = value;
+
+                    } else {
+
+                        value = _.toUpper(value);
+
+                        switch (value) {
+
+                            case LogLevel.TRACE:
+                            case LogLevel.DEBUG:
+                            case LogLevel.INFO:
+                            case LogLevel.WARN:
+                            case LogLevel.ERROR:
+                                //nrLog.trace(`._writeOutsideLog(): level = "${value}"`);
+                                level = value;
+                                break;
+
+                            default:
+                                nrLog.warn(`._writeOutsideLog(): Unknown value: "${value}"`);
+                                break;
+
+                        }
+                    }
+
+                }
+
+            });
+        }
+
+        row = _.trimStart(row);
+
+        let tmp = `[${time}]`;
+        if ( _.startsWith(row, tmp) ) {
+            row = _.trimStart(row.substr(tmp.length));
+        }
+
+        tmp = `[${level}]`;
+        if ( _.startsWith(row, tmp) ) {
+            row = _.trimStart(row.substr(tmp.length));
+        }
+
+        switch (level) {
+
+            case LogLevel.TRACE:
+                nrLog.trace(`#${key} ${row}` );
+                break;
+
+            case LogLevel.DEBUG:
+                nrLog.debug(`#${key} ${row}` );
+                break;
+
+            case LogLevel.INFO:
+                nrLog.info(`#${key} ${row}` );
+                break;
+
+            case LogLevel.WARN:
+                nrLog.warn(`#${key} ${row}` );
+                break;
+
+            case LogLevel.ERROR:
+                nrLog.error(`#${key} ${row}` );
+                break;
+
+            default:
+
+                nrLog.warn(`._writeOutsideLog(): Level "${level}" was unknown. This should not happen.`);
+
+                nrLog.warn(`#${key} ${row}` );
+
+                break;
+
+        }
+
 
     }
 
