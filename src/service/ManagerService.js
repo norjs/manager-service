@@ -4,8 +4,6 @@ import LogicUtils from '@norjs/utils/Logic';
 import LogUtils from '@norjs/utils/Log';
 import ChildProcessUtils from '@norjs/utils/ChildProcess';
 import ServiceInstance from './ServiceInstance.js';
-
-// Types and interfaces
 import '@norjs/types/NorConfigurationObject.js';
 import '@norjs/types/NorManagerInstallActionObject.js';
 import '@norjs/types/NorManagerStartActionObject.js';
