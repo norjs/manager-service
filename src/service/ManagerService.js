@@ -10,6 +10,7 @@ import '@norjs/types/NorManagerStartActionObject.js';
 import '@norjs/types/NorManagerStatusActionObject.js';
 import '@norjs/types/NorManagerStopActionObject.js';
 import {LogLevel} from "@norjs/utils/src/Logger";
+import ColorUtils from "@norjs/utils/src/ColorUtils";
 
 const nrLog = LogUtils.getLogger('ManagerService');
 
@@ -559,6 +560,8 @@ class ManagerService {
         //nrLog.trace(`._writeOutsideLog(): defaultLevel: "${defaultLevel}"`);
         //nrLog.trace(`._writeOutsideLog(): key: "${key}"`);
         //nrLog.trace(`._writeOutsideLog(): row: "${row}"`);
+
+        row = ColorUtils.stripColors(row);
 
         /**
          *
