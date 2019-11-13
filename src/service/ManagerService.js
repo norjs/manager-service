@@ -518,7 +518,7 @@ class ManagerService {
                 payload.development = true;
                 break;
             default:
-                throw new TypeUtils(`Unknown mode: "${this._mode}"`);
+                throw new TypeError(`Unknown mode: "${this._mode}"`);
         }
 
         nrLog.trace(`Starting ${this._mode} services...` );
