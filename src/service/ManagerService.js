@@ -15,6 +15,20 @@ import ColorUtils from "@norjs/utils/src/ColorUtils";
 const nrLog = LogUtils.getLogger('ManagerService');
 
 /**
+ * Time to wait after service start before displaying started/stopped information
+ *
+ * @type {number}
+ */
+const START_INFO_WAIT_TIME = 1000;
+
+/**
+ * Time to wait before starting again stopped service (ms)
+ *
+ * @type {number}
+ */
+const RESTART_AFTER_FAIL_WAIT_TIME = 500;
+
+/**
  *
  */
 class ManagerService {
@@ -70,6 +84,13 @@ class ManagerService {
          */
         this.Class = ManagerService;
 
+        /**
+         *
+         * @member {boolean}
+         * @private
+         */
+        this._isDestroyed = false;
+
     }
 
     /**
@@ -112,6 +133,8 @@ class ManagerService {
      * Close the server
      */
     destroy () {
+
+        this._isDestroyed = true;
 
         LogicUtils.tryCatch( () => this._stopServices(), err => this._handleError(err) );
 
@@ -199,87 +222,10 @@ class ManagerService {
             name: payload.name
         });
 
-        const steps = _.map(serviceKeys, key => {
-            return () => {
-
-                const service = this._services[key];
-
-                if (!service.path) {
-                    return Promise.resolve({name: key, status: -3, error: `No service.path defined!`});
-                }
-
-                if (_.has(this._instances, key)) {
-                    return Promise.resolve({name: key, status: -3, error: `Service was already started`});
-                }
-
-                const options = {
-                    cwd: service.path,
-                    env: service.env ? _.cloneDeep(service.env) : {},
-                    stdout: (data) => {
-                        data.split('\n').filter(row => !!_.trim(row)).forEach(row => {
-                            this._writeOutsideLog(LogLevel.DEBUG, key, row);
-                        });
-                    },
-                    stderr: (data) => {
-                        data.split('\n').filter(row => !!_.trim(row)).forEach(row => {
-                            this._writeOutsideLog(LogLevel.ERROR, key, row);
-                        });
-                    }
-                };
-
-                /**
-                 *
-                 * @type {NorChildProcess}
-                 */
-                const child = ChildProcessUtils.execute('npm', ['start'], options);
-
-                child.resultPromise.then( result => {
-                    if (result && result.status !== undefined) {
-                        nrLog.info(`Service "${key}" stopped with a status ${result ? result.status : undefined}`);
-                    } else {
-                        nrLog.error(`Service "${key}" stopped with an unexpected result status:`, result);
-                    }
-                }, err => {
-                    if (err.status) {
-                        if (err.stderr) {
-                            nrLog.error(`Service "${key}" stopped with a status ${err.status}: "${err.stderr}"`);
-                        } else {
-                            nrLog.error(`Service "${key}" stopped with a status ${err.status}`);
-                        }
-                    } else {
-                        nrLog.error(`Service "${key}" stopped with an error: `, err);
-                    }
-                }).catch(err => {
-
-                    if (err.stack) {
-                        nrLog.error(`Service "${key}" had an error: `, err.stack);
-                    } else {
-                        nrLog.error(`Service "${key}" had an error: `, err);
-                    }
-
-                }).finally(() => {
-
-                    this._removeInstance(key);
-
-                });
-
-                // noinspection UnnecessaryLocalVariableJS
-                const instance = new ServiceInstance({
-                    name: key,
-                    childProcess: child
-                });
-
-                this._instances[key] = instance;
-
-                return new Promise( resolve => {
-                    setTimeout(() => {
-                        resolve({name: key, state: this._instances[key] ? "started" : "stopped" } );
-                    }, 1000);
-                });
-
-            };
-
-        });
+        const steps = _.map(
+            serviceKeys,
+            key => () => this._onStartService(key, this._services[key])
+        );
 
         return ManagerService._collectResults(steps);
 
@@ -358,6 +304,111 @@ class ManagerService {
                 state: _.has(this._instances, key) ? 'started' : 'stopped'
             })
         ));
+
+    }
+
+    /**
+     *
+     * @param service
+     * @private
+     */
+    async _onStartService (key, service) {
+
+        if (this._isDestroyed) {
+            return {name: key, status: -3, error: `Service has been destroyed!`};
+        }
+
+        if (!service.path) {
+            return {name: key, status: -3, error: `No service.path defined!`};
+        }
+
+        if (_.has(this._instances, key)) {
+            return {name: key, status: -3, error: `Service was already started`};
+        }
+
+        const options = {
+            cwd: service.path,
+            env: service.env ? _.cloneDeep(service.env) : {},
+            stdout: (data) => {
+                data.split('\n').filter(row => !!_.trim(row)).forEach(row => {
+                    this._writeOutsideLog(LogLevel.DEBUG, key, row);
+                });
+            },
+            stderr: (data) => {
+                data.split('\n').filter(row => !!_.trim(row)).forEach(row => {
+                    this._writeOutsideLog(LogLevel.ERROR, key, row);
+                });
+            }
+        };
+
+        /**
+         *
+         * @type {NorChildProcess}
+         */
+        const child = ChildProcessUtils.execute('npm', ['start'], options);
+
+        this._monitorChildInstance(key, service, child);
+
+        // noinspection UnnecessaryLocalVariableJS
+        const instance = new ServiceInstance({
+            name: key,
+            childProcess: child
+        });
+
+        this._instances[key] = instance;
+
+        return await new Promise( resolve => {
+            setTimeout(() => {
+                resolve({name: key, state: this._instances[key] ? "started" : "stopped" } );
+            }, START_INFO_WAIT_TIME);
+        });
+
+    }
+
+    /**
+     *
+     * @param key
+     * @param service
+     * @param child
+     * @returns {Promise<void>}
+     * @private
+     */
+    async _monitorChildInstance (key, service, child) {
+
+        try {
+
+            const result = await child.resultPromise;
+
+            if (result && result.status !== undefined) {
+                nrLog.info(`Service "${key}" stopped with a status ${result ? result.status : undefined}`);
+            } else {
+                nrLog.error(`Service "${key}" stopped with an unexpected result status:`, result);
+            }
+
+        } catch (err) {
+
+            if (err.status) {
+                if (err.stderr) {
+                    nrLog.error(`Service "${key}" stopped with a status ${err.status}: "${err.stderr}"`);
+                } else {
+                    nrLog.error(`Service "${key}" stopped with a status ${err.status}`);
+                }
+            } else {
+                nrLog.error(`Service "${key}" stopped with an error: `, err);
+            }
+
+        } finally {
+
+            this._removeInstance(key);
+
+            // Restart failed service after a moment
+            if (!this._isDestroyed) {
+                setTimeout(() => {
+                    this._onStartService(key, service);
+                }, RESTART_AFTER_FAIL_WAIT_TIME);
+            }
+
+        }
 
     }
 
