@@ -26,7 +26,7 @@ const START_INFO_WAIT_TIME = 1000;
  *
  * @type {number}
  */
-const RESTART_AFTER_FAIL_WAIT_TIME = 500;
+const RESTART_AFTER_FAIL_WAIT_TIME = 1000;
 
 /**
  *
