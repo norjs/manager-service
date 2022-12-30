@@ -33,7 +33,7 @@
     "lodash": "^4.17.15"
   },
   "devDependencies": {
-    "mocha": "^6.1.4",
+    "mocha": "^10.2.0",
     "sinon": "^7.4.1"
   }
 }
